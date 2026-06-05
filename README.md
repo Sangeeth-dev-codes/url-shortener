@@ -1,19 +1,156 @@
-# URL Shortener
+# URL Shortener API
 
-Learning project built with FastAPI.
+A URL Shortener built using FastAPI, SQLAlchemy, SQLite, and Pydantic.
 
-## Current Status
+---
 
-Project setup completed.
+## Features
 
-## Technologies
+- Create short URLs
+- Generate random short codes
+- Create custom short codes
+- Redirect using short URLs
+- Track click counts
+- Search URLs
+- Update short codes
+- Delete URLs
+- View URL statistics
+- Interactive Swagger documentation
 
-- Python
+---
+
+## Tech Stack
+
+- Python 3.8
 - FastAPI
+- SQLAlchemy
+- SQLite
+- Pydantic
 - Uvicorn
-- Git
-- GitHub
+
+---
+
+## Project Structure
+
+```
+url-shortener/
+│
+├── app/
+│   ├── main.py
+│   ├── database.py
+│   ├── models.py
+│   └── schemas.py
+│
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Sangeeth-dev-codes/url-shortener.git
+```
+
+Move into project directory:
+
+```bash
+cd url-shortener
+```
+
+Create virtual environment:
+
+```bash
+python -m venv myenv
+```
+
+Activate virtual environment:
+
+Windows:
+
+```bash
+myenv\Scripts\activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Run the Application
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Application:
+
+```text
+http://127.0.0.1:8000
+```
+
+Swagger Documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|----------|------------|-------------|
+| GET | / | Home |
+| POST | /shorten | Create short URL |
+| GET | /urls | Get all URLs |
+| GET | /stats/{short_code} | Get statistics |
+| GET | /search/{keyword} | Search URLs |
+| PUT | /update/{short_code} | Update short code |
+| DELETE | /delete/{short_code} | Delete URL |
+| GET | /{short_code} | Redirect URL |
+
+---
+
+## Example
+
+Create URL:
+
+```json
+{
+    "url": "https://openai.com"
+}
+```
+
+Response:
+
+```json
+{
+    "original_url": "https://openai.com",
+    "short_code": "ABC123",
+    "short_url": "http://127.0.0.1:8000/ABC123"
+}
+```
+
+---
+
+## Version
+
+Current Release:
+
+v1.0.0
+
+---
 
 ## Author
 
 Sangeeth
+
+Learning FastAPI and Backend Development
