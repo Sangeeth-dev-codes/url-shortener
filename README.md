@@ -19,6 +19,21 @@ A URL Shortener built using FastAPI, SQLAlchemy, SQLite, and Pydantic.
 
 ---
 
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/` | Home |
+| POST | `/shorten` | Create short URL |
+| GET | `/urls` | List all URLs |
+| GET | `/stats/{short_code}` | Get URL statistics |
+| GET | `/search/{keyword}` | Search URLs |
+| PUT | `/update/{short_code}` | Update short code |
+| DELETE | `/delete/{short_code}` | Delete URL |
+| GET | `/{short_code}` | Redirect to original URL |
+
+---
+
 ## Tech Stack
 
 - Python 3.8
@@ -104,21 +119,6 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## API Endpoints
-
-| Method | Endpoint | Description |
-|----------|------------|-------------|
-| GET | / | Home |
-| POST | /shorten | Create short URL |
-| GET | /urls | Get all URLs |
-| GET | /stats/{short_code} | Get statistics |
-| GET | /search/{keyword} | Search URLs |
-| PUT | /update/{short_code} | Update short code |
-| DELETE | /delete/{short_code} | Delete URL |
-| GET | /{short_code} | Redirect URL |
-
----
-
 ## Example
 
 Create URL:
@@ -151,6 +151,6 @@ v1.0.0
 
 ## Author
 
-Sangeeth
+Sangeeth C
 
-Learning FastAPI and Backend Development
+Learning Python Backend Development with FastAPI and SQLAlchemy.
