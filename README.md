@@ -56,6 +56,9 @@ url-shortener/
 │   ├── models.py
 │   └── schemas.py
 │
+├── images/
+│   └── swagger.png
+│
 ├── requirements.txt
 ├── README.md
 └── .gitignore
@@ -166,8 +169,21 @@ v1.0.0
 
 ---
 
+## Repository
+
+GitHub:
+https://github.com/Sangeeth-dev-codes/url-shortener
+
+---
+
+## License
+
+This project is created for learning and educational purposes.
+
+---
+
 ## Author
 
 Sangeeth C
 
-Learning Python Backend Development with FastAPI and SQLAlchemy.
+Python Developer | Learning Backend Development with FastAPI, SQLAlchemy, and Modern API Design.
