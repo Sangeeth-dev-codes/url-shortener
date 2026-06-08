@@ -2,5 +2,5 @@ myenv/
 __pycache__/
 *.pyc
 url_shortener.db
-.env
-.vscode/
+.git
+.vscode

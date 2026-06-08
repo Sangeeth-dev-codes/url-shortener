@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database import Base
 
@@ -15,6 +15,7 @@ class URL(Base):
 
     original_url = Column(
         String,
+        index=True,
         nullable=False
     )
 
@@ -31,6 +32,11 @@ class URL(Base):
     )
 
     created_at = Column(
-        DateTime,
-        default=datetime.utcnow
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc)
+    )
+
+    expires_at = Column(
+        DateTime(timezone=True),
+        nullable=True
     )

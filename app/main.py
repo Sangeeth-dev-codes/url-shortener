@@ -1,13 +1,17 @@
 import random
 import string
 
+from datetime import datetime, timezone, timedelta
+
 from typing import List
 
 from fastapi import (
     FastAPI,
     Depends,
     HTTPException,
-    status
+    status,
+    Request,
+    Query
 )
 
 from fastapi.responses import RedirectResponse
@@ -20,17 +24,28 @@ from app.models import URL
 
 from app.schemas import (
     URLResponse,
+    HomeResponse,
     URLStatsResponse,
     DeleteResponse,
+    UpdateResponse,
     URLCreate,
     UpdateCodeRequest,
-    SearchResponse
+    SearchResponse,
+    URLListResponse
 )
+
+tags_metadata = [
+    {
+        "name": "URLs",
+        "description": "URL management operations"
+    }
+]
 
 app = FastAPI(
     title="URL Shortener API",
     version="1.0.0",
-    description="A URL Shortener built with FastAPI and SQLAlchemy"
+    description="A URL Shortener built with FastAPI and SQLAlchemy",
+    openapi_tags=tags_metadata
 )
 
 URL.metadata.create_all(bind=engine)
@@ -40,7 +55,7 @@ URL.metadata.create_all(bind=engine)
 # Helper Function
 # =====================================
 
-def generate_short_code(db: Session):
+def generate_short_code(db: Session) -> str:
 
     while True:
 
@@ -63,7 +78,12 @@ def generate_short_code(db: Session):
 # Home
 # =====================================
 
-@app.get("/")
+@app.get(
+    "/",
+    response_model=HomeResponse,
+    summary="API Home",
+    description="Returns a welcome message for the URL Shortener API."
+)
 def home():
 
     return {
@@ -77,15 +97,30 @@ def home():
 
 @app.post(
     "/shorten",
+    summary="Create a Short URL",
+    description="Creates a shortened URL from a long URL. Supports optional custom short codes.",
     response_model=URLResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    tags=["URLs"],
+    responses={
+        400: {
+            "description": "Custom short code already exists"
+        }
+    }
 )
 def shorten_url(
+    request: Request,
     data: URLCreate,
     db: Session = Depends(get_db)
 ):
+    
+    base_url = str(request.base_url)
 
     original_url = str(data.url)
+
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        days=data.expires_in_days
+    )
 
     # Check if URL already exists
     existing_url = db.query(URL).filter(
@@ -97,10 +132,8 @@ def shorten_url(
         return {
             "original_url": existing_url.original_url,
             "short_code": existing_url.short_code,
-            "short_url": (
-                f"http://127.0.0.1:8000/"
-                f"{existing_url.short_code}"
-            )
+            "short_url": f"{base_url}{existing_url.short_code}",
+            "expires_at": existing_url.expires_at
         }
 
     # Custom short code
@@ -125,7 +158,8 @@ def shorten_url(
 
     new_url = URL(
         original_url=original_url,
-        short_code=short_code
+        short_code=short_code,
+        expires_at=expires_at
     )
 
     db.add(new_url)
@@ -135,10 +169,8 @@ def shorten_url(
     return {
         "original_url": new_url.original_url,
         "short_code": new_url.short_code,
-        "short_url": (
-            f"http://127.0.0.1:8000/"
-            f"{new_url.short_code}"
-        )
+        "short_url": f"{base_url}{new_url.short_code}",
+        "expires_at": new_url.expires_at
     }
 
 
@@ -146,12 +178,35 @@ def shorten_url(
 # Get All URLs
 # =====================================
 
-@app.get("/urls")
+@app.get(
+    "/urls",
+    summary="List All URLs",
+    description="Returns paginated URLs.",
+    response_model=List[URLListResponse],
+    tags=["URLs"]
+)
 def get_urls(
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=100,
+        description="Number of URLs to return"
+    ),
+    offset: int = Query(
+        default=0,
+        ge=0,
+        description="Number of URLs to skip"
+    ),
     db: Session = Depends(get_db)
 ):
 
-    urls = db.query(URL).all()
+    urls = (
+        db.query(URL)
+        .order_by(URL.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
 
     return urls
 
@@ -162,7 +217,15 @@ def get_urls(
 
 @app.get(
     "/stats/{short_code}",
-    response_model=URLStatsResponse
+    summary="Get URL Statistics",
+    description="Returns click count and creation date for a short URL.",
+    response_model=URLStatsResponse,
+    tags=["URLs"],
+    responses={
+        404: {
+            "description": "Short code not found"
+        }
+    }
 )
 def get_stats(
     short_code: str,
@@ -180,7 +243,21 @@ def get_stats(
             detail="Short code not found"
         )
 
-    return url
+    status_text = "active"
+    
+    current_time = datetime.utcnow()
+    
+    if url.expires_at and current_time > url.expires_at:
+        status_text = "expired"
+
+    return {
+        "original_url": url.original_url,
+        "short_code": url.short_code,
+        "clicks": url.clicks,
+        "created_at": url.created_at,
+        "expires_at": url.expires_at,
+        "status": status_text
+    }
 
 
 # =====================================
@@ -189,7 +266,10 @@ def get_stats(
 
 @app.get(
     "/search/{keyword}",
-    response_model=List[SearchResponse]
+    summary="Search URLs",
+    description="Search URLs by short code or original URL.",
+    response_model=List[SearchResponse],
+    tags=["URLs"]
 )
 def search_urls(
     keyword: str,
@@ -210,7 +290,21 @@ def search_urls(
 # Update Short Code
 # =====================================
 
-@app.put("/update/{short_code}")
+@app.put(
+    "/update/{short_code}",
+    summary="Update Short Code",
+    description="Updates an existing short code with a new unique value.",
+    response_model=UpdateResponse,
+    tags=["URLs"],
+    responses={
+        400: {
+            "description": "New short code already exists"
+        },
+        404: {
+            "description": "Short code not found"
+        }
+    }
+)
 def update_short_code(
     short_code: str,
     data: UpdateCodeRequest,
@@ -256,7 +350,15 @@ def update_short_code(
 
 @app.delete(
     "/delete/{short_code}",
-    response_model=DeleteResponse
+    summary="Delete URL",
+    description="Deletes a shortened URL from the database.",
+    response_model=DeleteResponse,
+    tags=["URLs"],
+    responses={
+        404: {
+            "description": "Short code not found"
+        }
+    }
 )
 def delete_url(
     short_code: str,
@@ -286,7 +388,12 @@ def delete_url(
 # Redirect URL
 # =====================================
 
-@app.get("/{short_code}")
+@app.get(
+    "/{short_code}",
+    summary="Redirect to Original URL",
+    description="Redirects a short code to its original URL and increments the click counter.",
+    tags=["URLs"]
+)
 def redirect_url(
     short_code: str,
     db: Session = Depends(get_db)
@@ -301,6 +408,18 @@ def redirect_url(
         raise HTTPException(
             status_code=404,
             detail="Short code not found"
+        )
+
+    current_time = datetime.utcnow()
+
+    if (
+        url.expires_at and
+        current_time > url.expires_at
+    ):
+
+        raise HTTPException(
+            status_code=410,
+            detail="This URL has expired"
         )
 
     url.clicks += 1
