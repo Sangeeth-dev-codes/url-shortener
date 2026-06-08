@@ -119,6 +119,12 @@ http://127.0.0.1:8000/docs
 
 ---
 
+## Swagger Documentation Preview
+
+![Swagger UI](images/swagger.png)
+
+---
+
 ## Example
 
 Create URL:
@@ -138,6 +144,17 @@ Response:
     "short_url": "http://127.0.0.1:8000/ABC123"
 }
 ```
+
+---
+
+## Future Enhancements
+
+- User authentication
+- URL expiration support
+- QR code generation
+- Analytics dashboard
+- PostgreSQL integration
+- Docker deployment
 
 ---
 
